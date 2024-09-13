@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bingo Cards Generator</title>
+    <style>
+      #canvas-container {
+        position: relative;
+        width: 3214px;
+        height: 4500px;
+        margin: auto;
+        border: 2px solid black;
+        overflow: hidden;
+        page-break-after: always;
+      }
+
+      #canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 0;
+      }
+
+      .question-box {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 74px;
+        font-family: "League Spartan", sans-serif;
+        color: #183582;
+        padding: 90px;
+        box-sizing: border-box;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        white-space: normal;
+        line-height: 1.2;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="canvas-container">
+      <canvas id="canvas" width="3214" height="4500"></canvas>
+    </div>
+
+    <!-- Include html2canvas library -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const backgroundImg = new Image();
+      backgroundImg.src = "/ccia_bingo.png";
+      backgroundImg.onload = () => {
+        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+        fetchQuestionsAndGenerateCards();
+      };
+
+      const boxPositions = [
+        { x: 515, y: 1740, width: 732, height: 705 },
+        { x: 1250, y: 1740, width: 732, height: 705 },
+        { x: 1965, y: 1740, width: 732, height: 705 },
+        { x: 2700, y: 1740, width: 732, height: 705 },
+        { x: 515, y: 2440, width: 732, height: 705 },
+        { x: 1250, y: 2440, width: 732, height: 705 },
+        { x: 1965, y: 2440, width: 732, height: 705 },
+        { x: 2700, y: 2440, width: 732, height: 705 },
+        { x: 515, y: 3130, width: 732, height: 705 },
+        { x: 1250, y: 3130, width: 732, height: 705 },
+        { x: 1965, y: 3130, width: 732, height: 705 },
+        { x: 2700, y: 3130, width: 732, height: 705 },
+        { x: 515, y: 3830, width: 732, height: 705 },
+        { x: 1250, y: 3830, width: 732, height: 705 },
+        { x: 1965, y: 3830, width: 732, height: 705 },
+        { x: 2700, y: 3830, width: 732, height: 705 },
+      ];
+
+      function fetchQuestionsAndGenerateCards() {
+        fetch("./ccia.json")
+          .then((response) => response.json())
+          .then((data) => {
+            const questions = data.map(
+              (question) => question["Bingo Question"]
+            );
+            generateMultipleCards(questions, 140);
+          })
+          .catch((error) => console.error("Error loading questions:", error));
+      }
+
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function generateMultipleCards(questions, numberOfCards) {
+        for (let i = 0; i < numberOfCards; i++) {
+          setTimeout(() => {
+            generateCard(questions, i + 1);
+          }, 20);
+        }
+      }
+
+      function generateCard(questions, cardNumber) {
+        clearCanvas();
+        const shuffledQuestions = shuffle([...questions]);
+        const cardQuestions = shuffledQuestions.slice(0, 16);
+        cardQuestions.forEach((question, index) => {
+          const { x, y, width, height } = boxPositions[index];
+          createTextDiv(question, x, y, width, height);
+        });
+
+        saveContainerAsImage(cardNumber);
+      }
+
+      function clearCanvas() {
+        const container = document.getElementById("canvas-container");
+        const divs = container.querySelectorAll(".question-box");
+        divs.forEach((div) => div.remove());
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+      }
+
+      function createTextDiv(text, x, y, width, height) {
+        const div = document.createElement("div");
+        div.className = "question-box";
+        div.style.left = `${x}px`;
+        div.style.top = `${y}px`;
+        div.style.width = `${width}px`;
+        div.style.height = `${height}px`;
+        div.innerText = text;
+        document.getElementById("canvas-container").appendChild(div);
+      }
+
+      function saveContainerAsImage(cardNumber) {
+        const container = document.getElementById("canvas-container");
+        html2canvas(container).then((canvas) => {
+          const link = document.createElement("a");
+          link.download = `bingo_card_${cardNumber}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        });
+      }
+    </script>
+  </body>
+</html>
